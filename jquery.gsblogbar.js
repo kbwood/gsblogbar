@@ -1,7 +1,7 @@
 /* http://keith-wood.name/gsblogbar.html
-   Google Search Blogbar for jQuery v1.0.0.
+   Google Search Blogbar for jQuery v1.0.1.
    See http://www.google.com/uds/solutions/blogbar/reference.html.
-   Written by Keith Wood (kbwood@virginbroadband.com.au) November 2008.
+   Written by Keith Wood (kbwood{at}iinet.com.au) November 2008.
    Dual licensed under the GPL (http://dev.jquery.com/browser/trunk/jquery/GPL-LICENSE.txt) and 
    MIT (http://dev.jquery.com/browser/trunk/jquery/MIT-LICENSE.txt) licenses. 
    Please attribute the author if you use it. */
@@ -186,11 +186,11 @@ if ($('script[src*=www.google.com/uds/api?file=uds.js]').length == 0) {
 	if (!$.googleSearchKey) {
 		throw 'Missing Google Search Key';
 	}
-	$('head').append('<script type="text/javascript" src="http://www.google.com/uds/' +
+	document.write('<script type="text/javascript" src="http://www.google.com/uds/' +
 		'api?file=uds.js&v=1.0&key=' + $.googleSearchKey + '"></script>\n' +
 		'<link type="text/css" href="http://www.google.com/uds/css/gsearch.css" rel="stylesheet"/>\n');
 }
-$('head').append('<script type="text/javascript" src="http://www.google.com/uds/' +
+document.write('<script type="text/javascript" src="http://www.google.com/uds/' +
 	'solutions/blogbar/gsblogbar.js"></script>\n' +
 	'<link type="text/css" href="http://www.google.com/uds/solutions/blogbar/gsblogbar.css" ' +
 	'rel="stylesheet"/>\n');
