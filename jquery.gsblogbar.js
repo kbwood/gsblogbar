@@ -1,113 +1,103 @@
 /* http://keith-wood.name/gsblogbar.html
-   Google Search Blogbar for jQuery v1.1.0.
+   Google Search Blogbar for jQuery v2.0.0.
    See http://www.google.com/uds/solutions/blogbar/reference.html.
    Written by Keith Wood (kbwood{at}iinet.com.au) November 2008.
    Available under the MIT (https://github.com/jquery/jquery/blob/master/MIT-LICENSE.txt) license. 
    Please attribute the author if you use it. */
 
-/* Display a Google Search Blogbar.
-   Attach it with options like:
-   $('div selector').gsblogbar({search: ['jquery']});
-*/
+(function($) { // hide the namespace
 
-(function($) { // Hide scope, no $ conflict
+	var pluginName = 'gsblogbar';
 
-/* GSBlogbar manager. */
-function GSBlogbar() {
-	this._defaults = {
-		horizontal: true, // True for horizontal display, false for vertical
-		verticalCompressed: false, // True for compressed layout when vertical, false for expanded
-		title: '', // Title for the bar
-		search: 'jquery', // Single or list of search terms
-		siteRestriction: '', // Specify a site to restrict searches to
-		order: this.orderDate, // Control the order of the results
-		manyResults: false, // True for many results, false for only a few
-		cycleTime: this.cycleManual, // Time between cycles of the search terms
-		cycleMode: this.cycleLinear, // Mode of cycling through the search terms
-		linkTarget: this.targetSelf, // Control where the blog links open
-		currentResult: '' // jQuery selector, jQuery object, or element for 
-			// additional info for current entry when horizontal
-	};
-}
+	/** Create the Google Search Blogbar plugin.
+		<p>Sets a <code>div</code> to display a blogbar.</p>
+		<p>Expects HTML like:</p>
+		<pre>&lt;div>&lt;/div></pre>
+		<p>Provide inline configuration like:</p>
+		<pre>&lt;div data-gsblogbar="name: 'value'">&lt;/div></pre>
+	 	@module GSBlogBar
+		@augments JQPlugin
+		@example $(selector).gsblogbar({search: ['jquery']}); */
+	$.JQPlugin.createPlugin({
 
-$.extend(GSBlogbar.prototype, {
-	/* Class name added to elements to indicate already configured with GSBlogbar. */
-	markerClassName: 'hasGSBlogbar',
-	/* Name of the data property for instance settings. */
-	propertyName: 'gsblogbar',
+		/** The name of the plugin. */
+		name: pluginName,
 
-	/* Cycle times. */
+		/** Cycle times - very short. */
 	cycleVShort: 3000,
+		/** Cycle times - short. */
 	cycleShort: 10000,
-	cycleMedium: 15000, // Default
+		/** Cycle times - medium (default). */
+		cycleMedium: 15000,
+		/** Cycle times - long. */
 	cycleLong: 30000,
+		/** Cycle times - manual. */
 	cycleManual: 3000000,
-	/* Cycle modes. */
+		/** Cycle modes - random. */
 	cycleRandom: 1,
-	cycleLinear: 2, // Default
-	/* Link targets. */
+		/** Cycle modes - linear (default). */
+		cycleLinear: 2,
+		/** Link targets - self. */
 	targetSelf: '_self',
+		/** Link targets - blank. */
 	targetBlank: '_blank',
+		/** Link targets - top. */
 	targetTop: '_top',
+		/** Link targets - parent. */
 	targetParent: '_parent',
-	/* Results order. */
+		/** Results order - relevance. */
 	orderRelevance: 'order-by-relevance',
+		/** Results order - daye. */
 	orderDate: 'order-by-date',
 
-	/* Override the default settings for all GSBlogbar instances.
-	   @param  options  (object) the new settings to use as defaults
-	   @return  (GSBlogbar) this object */
-	setDefaults: function(options) {
-		$.extend(this._defaults, options || {});
-		return this;
+		/** Default settings for the plugin.
+			@property [horizontal=true] {boolean} <code>true</code> for horizontal display,
+						or <code>false</code> for vertical.
+			@property [verticalCompressed=false] {boolean} <code>true</code> for compressed layout when vertical,
+						or <code>false</code> for expanded.
+			@property [title=''] {string} Title for the bar.
+			@property [search='jquery'] {string|string[]} Single or list of search terms.
+			@property [siteRestriction=''] {string} Specify a site to restrict searches to.
+			@property [order=this.orderDate] {string} Control the order of the results.
+			@property [manyResults=false] {boolean} <code>true</code> for many results,
+						or <code>false</code> for only a few.
+			@property [cycleTime=this.cycleManual] {number} Time between cycles of the search terms (milliseconds).
+			@property [cycleMode=this.cycleLinear] {number} Mode of cycling through the search terms.
+			@property [linkTarget=this.targetSelf] {string} Control where the blog links open.
+			@property [currentResult=''] {string|jQuery|Element} jQuery selector, jQuery object,
+						or element for additional info for current entry when horizontal. */
+		defaultOptions: {
+			horizontal: true,
+			verticalCompressed: false,
+			title: '',
+			search: 'jquery',
+			siteRestriction: '',
+			order: this.orderDate,
+			manyResults: false,
+			cycleTime: this.cycleManual,
+			cycleMode: this.cycleLinear,
+			linkTarget: this.targetSelf,
+			currentResult: ''
 	},
 
-	/* Attach the blogbar widget to a div.
-	   @param  target   (element) the control to affect
-	   @param  options  (object) the custom options for this instance */
-	_attachPlugin: function(target, options) {
-		target = $(target);
-		if (target.hasClass(this.markerClassName)) {
-			return;
-		}
-		var inst = {options: $.extend({}, this._defaults, options), target: target};
-		target.addClass(this.markerClassName).data(this.propertyName, inst);
-		this._optionPlugin(target, options);
+		_init: function() {
+			this.defaultOptions.order = this.orderDate,
+			this.defaultOptions.cycleTime = this.cycleManual,
+			this.defaultOptions.cycleMode = this.cycleLinear;
+			this.defaultOptions.linkTarget = this.targetSelf;
+			this._super();
 	},
 
-	/* Retrieve or reconfigure the settings for a control.
-	   @param  target   (element) the control to affect
-	   @param  options  (object) the new options for this instance or
-	                    (string) an individual property name
-	   @param  value    (any) the individual property value (omit if options
-	                    is an object or to retrieve the value of a setting)
-	   @return  (any) if retrieving a value */
-	_optionPlugin: function(target, options, value) {
-		target = $(target);
-		var inst = target.data(this.propertyName);
-		if (!options || (typeof options == 'string' && value == null)) { // Get option
-			var name = options;
-			options = (inst || {}).options;
-			return (options && name ? options[name] : options);
-		}
-
-		if (!target.hasClass(this.markerClassName)) {
-			return;
-		}
-		options = options || {};
-		if (typeof options == 'string') {
-			var name = options;
-			options = {};
-			options[name] = value;
-		}
+		_optionsChanged: function(elem, inst, options) {
 		$.extend(inst.options, options);
-		this._updateGSBlogbar(target[0], inst);
+			this._updateGSBlogbar(elem[0], inst);
 	},
 
-	/* Redisplay the blogbar with an updated display.
-	   @param  target  (element) the affected division
-	   @param  inst    (object) the instance settings */
-	_updateGSBlogbar: function(target, inst) {
+		/** Redisplay the blogbar with an updated display.
+			@private
+			@param elem {Element} The affected division.
+			@param inst {object} The instance settings. */
+		_updateGSBlogbar: function(elem, inst) {
 		var getElement = function(selector) {
 			var element = inst.options[selector];
 			element = (element ? (element.jQuery ? element : $(element)) : null);
@@ -115,7 +105,7 @@ $.extend(GSBlogbar.prototype, {
 		};
 		var search = inst.options.search;
 		search = ($.isArray(search) ? search : [search]);
-		inst.blogbar = new GSblogBar(target, {largeResultSet: inst.options.manyResults,
+			inst.blogbar = new GSblogBar(elem, {largeResultSet: inst.options.manyResults,
 			horizontal: inst.options.horizontal,
 			resultStyle: (inst.options.verticalCompressed ?
 				GSblogBar.RESULT_STYLE_COMPRESSED : GSblogBar.RESULT_STYLE_EXPANDED),
@@ -126,81 +116,34 @@ $.extend(GSBlogbar.prototype, {
 				cycleMode: inst.options.cycleMode}});
 	},
 
-	/* Perform a new seacrh in the blogbar.
-	   @param  target  (element) the affected division
-	   @param  search  (string) the new search terms */
-	_searchPlugin: function(target, search) {
-		var inst = $.data(target, this.propertyName);
+		/** Perform a new search in the blogbar.
+			@param elem {Element} The affected division.
+			@param search {string} The new search terms. */
+		search: function(elem, search) {
+			var inst = this._getInst(elem);
 		if (inst) {
 			$.extend(inst.options, {search: search});
 			inst.blogbar.execute(search);
 		}
 	},
 
-	/* Remove the plugin functionality from a control.
-	   @param  target  (element) the control to affect */
-	_destroyPlugin: function(target) {
-		target = $(target);
-		if (!target.hasClass(this.markerClassName)) {
-			return;
-		}
-		target.removeClass(this.markerClassName).empty().removeData(this.propertyName);
-	}
-});
-
-// The list of commands that return values and don't permit chaining
-var getters = [];
-
-/* Determine whether a command is a getter and doesn't permit chaining.
-   @param  command    (string, optional) the command to run
-   @param  otherArgs  ([], optional) any other arguments for the command
-   @return  true if the command is a getter, false if not */
-function isNotChained(command, otherArgs) {
-	if (command == 'option' && (otherArgs.length == 0 ||
-			(otherArgs.length == 1 && typeof otherArgs[0] == 'string'))) {
-		return true;
-	}
-	return $.inArray(command, getters) > -1;
-}
-
-/* Attach the GSBlogbar functionality to a jQuery selection.
-   @param  options  (object) the new settings to use for these instances (optional) or
-                    (string) the command to run (optional)
-   @return  (jQuery) for chaining further calls or
-            (any) getter value */
-$.fn.gsblogbar = function(options) {
-	var otherArgs = Array.prototype.slice.call(arguments, 1);
-	if (isNotChained(options, otherArgs)) {
-		return plugin['_' + options + 'Plugin'].apply(plugin, [this[0]].concat(otherArgs));
-	}
-	return this.each(function() {
-		if (typeof options == 'string') {
-			if (!plugin['_' + options + 'Plugin']) {
-				throw 'Unknown command: ' + options;
-			}
-			plugin['_' + options + 'Plugin'].apply(plugin, [this].concat(otherArgs));
-		}
-		else {
-			plugin._attachPlugin(this, options || {});
+		_preDestroy: function(elem, inst) {
+			elem.empty();
 		}
 	});
-};
 
-// Add required external files - note: key must be set before loading this module
-if ($('script[src*="www.google.com/uds/api?file=uds.js"]').length == 0) {
+	// Add required external files - note: key must be set before loading this module
+	if ($('script[src*="www.google.com/uds/api?file=uds.js"]').length === 0) {
 	if (!$.googleSearchKey) {
 		throw 'Missing Google Search Key';
 	}
 	document.write('<script type="text/javascript" src="http://www.google.com/uds/' +
 		'api?file=uds.js&v=1.0&key=' + $.googleSearchKey + '"></script>\n' +
 		'<link type="text/css" href="http://www.google.com/uds/css/gsearch.css" rel="stylesheet"/>\n');
-}
-document.write('<script type="text/javascript" src="http://www.google.com/uds/' +
+	}
+	document.write('<script type="text/javascript" src="http://www.google.com/uds/' +
 	'solutions/blogbar/gsblogbar.js"></script>\n' +
 	'<link type="text/css" href="http://www.google.com/uds/solutions/blogbar/gsblogbar.css" ' +
 	'rel="stylesheet"/>\n');
-      
-/* Initialise the GSBlogbar functionality. */
-var plugin = $.gsblogbar = new GSBlogbar(); // Singleton instance
 
 })(jQuery);
